@@ -2,28 +2,25 @@ import numpy as np
 import pickle
 from sklearn import neighbors, datasets
 
-fileName = 'userDataPICKLED/train7.dat'
+fileName = 'userData/train7.p'
 f = open(fileName,'r')
 train7 = pickle.load(f)
 f.close()
 
-fileName = 'userDataPICKLED/train8.dat'
+fileName = 'userData/train8.p'
 f = open(fileName,'r')
 train8 = pickle.load(f)
 f.close()
 
-fileName = 'userDataPICKLED/test7.dat'
+fileName = 'userData/test7.p'
 f = open(fileName,'r')
 test7 = pickle.load(f)
 f.close()
 
-fileName = 'userDataPICKLED/test8.dat'
+fileName = 'userData/test8.p'
 f = open(fileName,'r')
 test8 = pickle.load(f)
 f.close()
-
-# print train7, train8, test7, test8
-# print train7.shape, train8.shape, test7.shape, test8.shape
 
 def ReshapeData(set1,set2):
 	X = np.zeros((2000,5*2*3),dtype='f') # 1000 * 2 training points, 5*4*6 (120) features
@@ -41,8 +38,8 @@ def ReshapeData(set1,set2):
  				for m in range(0,3): # tips aka squares 3-6 see diagram WHY ISNT THIS 3-6
 					X[i,n] = set1[j,k,m,i]
 					X[i+1000,n] = set2[j,k,m,i]
-					y[i] = 0 # first 1000 points belong to class zero
-					y[i+1000] = 1 # second 1000 points belong to class one
+					y[i] = 7 # first 1000 points belong to class zero ### CHANGED
+					y[i+1000] = 8 # second 1000 points belong to class one ### CHANGED
 					n += 1
 	return X, y
 
@@ -89,24 +86,4 @@ testX, testy = ReshapeData(test7,test8)
 clf = neighbors.KNeighborsClassifier(15)
 clf.fit(trainX,trainy)
 
-predictionsRight = 0
-
-for i in range (0,2000):
-	prediction = clf.predict(testX[i,:])
-
-	if prediction == testy[i]:
-		predictionsRight += 1
-
-percent = 100.00 * (predictionsRight/float(len(testX)))
-
-print predictionsRight, percent
-
-# print trainX
-# print trainX.shape
-# print trainy
-# print trainy.shape
-
-# print testX
-# print testX.shape
-# print testy
-# print testy.shape
+pickle.dump(clf, open('userData/classifier.p','wb'))
