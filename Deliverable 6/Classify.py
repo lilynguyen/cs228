@@ -2,86 +2,26 @@ import numpy as np
 import pickle
 from sklearn import neighbors, datasets
 
-fileName = 'userData/Margolis_train0.p'
-f = open(fileName,'rb')
-train0 = pickle.load(f)
-
-fileName = 'userData/Margolis_test0.p'
-f = open(fileName,'rb')
-test0 = pickle.load(f)
-
-fileName = 'userData/train1.p'
-f = open(fileName,'rb')
-train1 = pickle.load(f)
-
-fileName = 'userData/test1.p'
-f = open(fileName,'rb')
-test1 = pickle.load(f)
-
-fileName = 'userData/Sheehan_train2.p'
-f = open(fileName,'rb')
-train2 = pickle.load(f)
-
-fileName = 'userData/Sheehan_test2.p'
-f = open(fileName,'rb')
-test2 = pickle.load(f)
-
-fileName = 'userData/Siegel_train3.p'
-f = open(fileName,'rb')
-train3 = pickle.load(f)
-
-fileName = 'userData/Siegel_test3.p'
-f = open(fileName,'rb')
-test3 = pickle.load(f)
-
-fileName = 'userData/train4.p'
-f = open(fileName,'rb')
-train4 = pickle.load(f)
-
-fileName = 'userData/test4.p'
-f = open(fileName,'rb')
-test4 = pickle.load(f)
-
-fileName = 'userData/Siegel_train5.p'
-f = open(fileName,'rb')
-train5 = pickle.load(f)
-
-fileName = 'userData/Siegel_test5.p'
-f = open(fileName,'rb')
-test5 = pickle.load(f)
-
-fileName = 'userData/train6.p'
-f = open(fileName,'rb')
-train6 = pickle.load(f)
-
-fileName = 'userData/test6.p'
-f = open(fileName,'rb')
-test6 = pickle.load(f)
-
-fileName = 'userData/White_train7.p'
-f = open(fileName,'rb')
-train7 = pickle.load(f)
-
-fileName = 'userData/White_test7.p'
-f = open(fileName,'rb')
-test7 = pickle.load(f)
-
-fileName = 'userData/train8.p'
-f = open(fileName,'rb')
-train8 = pickle.load(f)
-
-fileName = 'userData/test8.p'
-f = open(fileName,'rb')
-test8 = pickle.load(f)
-
-fileName = 'userData/train9.p'
-f = open(fileName,'rb')
-train9 = pickle.load(f)
-
-fileName = 'userData/test9.p'
-f = open(fileName,'rb')
-test9 = pickle.load(f)
-
+train0 = pickle.load(open('userData/Margolis_train0.p','rb'))
+test0 = pickle.load(open('userData/Margolis_test0.p','rb'))
+train1 = pickle.load(open('userData/train1.p','rb'))
+test1 = pickle.load(open('userData/test1.p','rb'))
+train2 = pickle.load(open('userData/Sheehan_train2.p','rb'))
+test2 = pickle.load(open('userData/Sheehan_test2.p','rb'))
+train3 = pickle.load(open('userData/Siegel_train3.p','rb'))
+test3 = pickle.load(open('userData/Siegel_test3.p','rb'))
+train4 = pickle.load(open('userData/train4.p','rb'))
+test4 = pickle.load(open('userData/test4.p','rb'))
+train5 = pickle.load(open('userData/Siegel_train5.p','rb'))
+test5 = pickle.load(open('userData/Siegel_test5.p','rb'))
+train6 = pickle.load(open('userData/train6.p','rb'))
+test6 = pickle.load(open('userData/test6.p','rb'))
+train7 = pickle.load(open('userData/White_train7.p','rb'))
+test7 = pickle.load(open('userData/White_test7.p','rb'))
+train8 = pickle.load(open('userData/train8.p','rb'))
+test8 = pickle.load(open('userData/test8.p','rb'))
+train9 = pickle.load(open('userData/train9.p','rb'))
+test9 = pickle.load(open('userData/test9.p','rb'))
 
 def ReshapeData(set0, set1, set2, set3, set4, set5, set6, set7, set8, set9):
 	X = np.zeros((10000,5*2*3),dtype='f') # 1000 * 2 training points, 5*4*6 (120) features
@@ -143,7 +83,6 @@ def CenterData(X):
 	X[:,:,2,:] = allZCoordinates - meanValue
 
 	return X
-
 
 train0 = ReduceData(train0)
 test0 = ReduceData(test0)

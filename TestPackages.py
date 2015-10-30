@@ -13,3 +13,5 @@ try:
     import scipy
 except ImportError:
     print "scipy is not installed"
+    
+print "done"
