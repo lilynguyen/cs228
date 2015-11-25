@@ -68,16 +68,16 @@ print database
 
 pickle.dump(database, open('userData/database.p','wb'))
 
-listImages = ["./images/0.png",
-"./images/1.png",
-"./images/2.png",
-"./images/3.png",
-"./images/4.png",
-"./images/5.png",
-"./images/6.png",
-"./images/7.png",
-"./images/8.png",
-"./images/9.png"]
+listImages = ["./images/gesture0.png",
+"./images/gesture1.png",
+"./images/gesture2.png",
+"./images/gesture3.png",
+"./images/gesture4.png",
+"./images/gesture5.png",
+"./images/gesture6.png",
+"./images/gesture7.png",
+"./images/gesture8.png",
+"./images/gesture9.png"]
 
 clf = pickle.load(open('userData/classifier.p','rb'))
 

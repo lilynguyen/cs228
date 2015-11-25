@@ -1,0 +1,14 @@
+(dp0
+S'lily'
+p1
+(dp2
+S'logins'
+p3
+I31
+sS'digit0attempts'
+p4
+I31
+sS'digit1attempts'
+p5
+I2
+ss.
