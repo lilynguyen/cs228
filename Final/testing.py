@@ -1,15 +1,19 @@
 import sys
 import os
 import thread
+import threading
 import time
 
 import Leap
 from Leap import CircleGesture, KeyTapGesture, ScreenTapGesture, SwipeGesture
 from mpl_toolkits.mplot3d import Axes3D
 
+from threading import Timer
+
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
+import matplotlib.gridspec as gridspec
 
 # =========================================
 # 								GUI CLASS
@@ -50,10 +54,12 @@ class GUI():
 			'./iamges/x.png']
 
 		self.programImages = ['./images/logo.png',
-			'./images/gif.gif']
+			'./images/begin.png',
+			'./images/hover.png']
 
 		# ------ GLOBAL VARIABLES ------
 		self.lines = []
+		self.dis_already = False
 
 		# ------ WINDOW SETTINGS  ------
 		mpl.interactive(True)
@@ -63,7 +69,8 @@ class GUI():
 
 		# ------ PANEL INITS -----------
 		self.splashPanel = ''
-		self.beginPanel = ''
+		self.beginPanelTitle = ''
+		self.beginPanelImg = ''
 		self.handPanel = ''
 
 	def setup_splashPanel(self):
@@ -71,11 +78,16 @@ class GUI():
 		self.splashPanel.axis('off')
 
 	def setup_beginPanel(self):
-		self.beginPanel = self.fig.add_subplot(111)
-		self.beginPanel.axis('off')
+		gs = gridspec.GridSpec(5,1)
+
+		self.beginPanelTitle = self.fig.add_subplot(gs[0,0])
+		self.beginPanelTitle.axis('off')
+
+		self.beginPanelImg = self.fig.add_subplot(gs[1:4,0])
+		self.beginPanelImg.axis('off')
 
 	def setup_handPanel(self):
-		self.handPanel = self.fig.add_subplot(111, projection='3d', axisbg='black', frame_on=False)
+		self.handPanel = self.fig.add_subplot(111, projection='3d', axisbg='none', frame_on=False)
 		self.handPanel.view_init(azim=90)
 		self.handPanel.set_xlim(-50,50)
 		self.handPanel.set_ylim(150,200)
@@ -132,17 +144,27 @@ class GUI():
 		## modularize if u rly think necc but not rly lol
 
 	def begin_screen(self):
-		imageLocation = self.positionImages[3]
-		image = mpimg.imread(imageLocation)
-		self.beginPanel.imshow(image)
-		plt.draw()
+		if self.dis_already == False: # ensure that image only gets added once to prev lag
+			
+			imageLocation = self.programImages[1]
+			image = mpimg.imread(imageLocation)
+			self.beginPanelTitle.imshow(image)
+
+			imageLocation = self.programImages[2]
+			image = mpimg.imread(imageLocation)
+			self.beginPanelImg.imshow(image)
+			plt.draw()
+
+			self.dis_already = True
 
 	def clear_begin_screen(self):
-		self.fig.delaxes(self.beginPanel) # DELETE SUBPLOT, sim. to clear, axis off
-		# self.beginPanel.clear()
-		# self.beginPanel.axis('off')
-		plt.draw()
+		self.beginPanelTitle.clear()
+		self.beginPanelTitle.axis('off')
 
+		#self.fig.delaxes(self.beginPanel) # DELETE SUBPLOT, sim. to clear, axis off
+		self.beginPanelImg.clear()
+		self.beginPanelImg.axis('off')
+		plt.draw()
 
 # =========================================
 # 					LEAP MOTION LISTENER
@@ -166,7 +188,8 @@ class LeapListener(Leap.Listener):
 		print 'LM: Device Failed'
 
 	def on_frame(self, controller):
-		#print 'LM: Frame Capturing' # CONSTANTLY CAPTURING, THIS IS THE LOOP
+		#CONSTANTLY CAPTURING, THIS IS THE MAIN LOOP
+		#print 'LM: Frame Capturing' 
 		game.game_loop()
 
 # =========================================
@@ -176,33 +199,33 @@ class LeapListener(Leap.Listener):
 class Game():
 	def __init__(self):
 		
-		gui.setup_handPanel()
-
-		self.TRUE = 1
-		self.FALSE = 0
+		# gui.setup_handPanel()
 
 		# ------ GAME STATES -----------
 		self.BEGIN = 0
-		self.DRAW_HAND = 1
+		self.MENU = 1
 
+		# ------ GLOBAL VARIABLES ------
 		self.gameState = self.BEGIN ## to start
 
 	def game_loop(self):
+
 		frame = controller.frame()
 		handPresent = len(frame.hands)
 
 		if self.gameState == self.BEGIN:
-			if handPresent == self.FALSE:
-				gui.begin_screen()
+			gui.begin_screen()
 
-			elif handPresent == self.TRUE:
-				for gesture in frame.gestures():
-					if gesture.type == Leap.Gesture.TYPE_SWIPE:
-						gui.clear_begin_screen()
-						self.gameState = self.DRAW_HAND
+			# for gesture in frame.gestures():
+			# 	if gesture.type == Leap.Gesture.TYPE_SWIPE:
+			# 		print 'Swipe Detected'
+			# 		gui.clear_begin_screen()
 
+			if handPresent == 1:
+				gui.clear_begin_screen()
+				self.gameState = self.MENU
 
-		elif self.gameState == self.DRAW_HAND:
+		elif self.gameState == self.MENU:
 			gui.draw_hand(frame)
 
 # =========================================
@@ -219,6 +242,7 @@ def main():
 	gui.splash_screen()
 
 	gui.setup_beginPanel()
+	gui.setup_handPanel()
 
 	# then continue on with the MAIN GAME LOOP
 	leapListener = LeapListener()
