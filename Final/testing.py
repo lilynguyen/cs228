@@ -3,11 +3,11 @@ import os
 import thread
 import threading
 import time
-
 import Leap
+
 from Leap import CircleGesture, KeyTapGesture, ScreenTapGesture, SwipeGesture
 from mpl_toolkits.mplot3d import Axes3D
-
+from matplotlib.widgets import Button
 from threading import Timer
 
 import matplotlib as mpl
@@ -55,11 +55,13 @@ class GUI():
 
 		self.programImages = ['./images/logo.png',
 			'./images/begin.png',
-			'./images/hover.png']
+			'./images/hover.png',
+			'./images/username.png']
 
 		# ------ GLOBAL VARIABLES ------
 		self.lines = []
-		self.dis_already = False
+		self.begin_dis_already = False
+		self.username_dis_already = False
 
 		# ------ WINDOW SETTINGS  ------
 		mpl.interactive(True)
@@ -85,6 +87,15 @@ class GUI():
 
 		self.beginPanelImg = self.fig.add_subplot(gs[1:4,0])
 		self.beginPanelImg.axis('off')
+
+	def setup_usernamePanel(self):
+		gs = gridspec.GridSpec(5,1)
+
+		self.usernamePanelTitle = self.fig.add_subplot(gs[0,0])
+		self.usernamePanelTitle.axis('off')
+
+		self.usernamePanelButton = self.fig.add_subplot(gs[1:4,0])
+		self.usernamePanelButton.axis('off')
 
 	def setup_handPanel(self):
 		self.handPanel = self.fig.add_subplot(111, projection='3d', axisbg='none', frame_on=False)
@@ -144,7 +155,7 @@ class GUI():
 		## modularize if u rly think necc but not rly lol
 
 	def begin_screen(self):
-		if self.dis_already == False: # ensure that image only gets added once to prev lag
+		if self.begin_dis_already == False: # ensure that image only gets added once to prev lag
 			
 			imageLocation = self.programImages[1]
 			image = mpimg.imread(imageLocation)
@@ -153,9 +164,10 @@ class GUI():
 			imageLocation = self.programImages[2]
 			image = mpimg.imread(imageLocation)
 			self.beginPanelImg.imshow(image)
+
 			plt.draw()
 
-			self.dis_already = True
+			self.begin_dis_already = True
 
 	def clear_begin_screen(self):
 		self.beginPanelTitle.clear()
@@ -165,6 +177,22 @@ class GUI():
 		self.beginPanelImg.clear()
 		self.beginPanelImg.axis('off')
 		plt.draw()
+
+	def username_screen(self):
+		if self.username_dis_already == False:
+
+			imageLocation = self.programImages[3]
+			image = mpimg.imread(imageLocation)
+			self.usernamePanelTitle.imshow(image)
+
+			buttonUsername = Button(self.usernamePanelButton, 'Enter')
+			buttonUsername.on_clicked(usernameGui.create_window)
+
+			#return usernameGui.get_username()
+
+			plt.draw()
+
+			self.username_dis_already == True
 
 # =========================================
 # 					LEAP MOTION LISTENER
@@ -193,7 +221,41 @@ class LeapListener(Leap.Listener):
 		game.game_loop()
 
 # =========================================
-# 								CONSTANTS
+# 					TKINTER USERNAME CLASS
+# =========================================
+
+class UsernameGUI():
+	def __init__(self):
+		self.username = ''
+
+	def create_window(self, event):
+		self.main_window = tkinter.Tk()
+
+		self.top_frame = tkinter.Frame(self.main_window)
+		self.username_label = tkinter.Label(self.top_frame, text='Enter Username:')
+		self.username_entry = tkinter.Entry(self.top_frame, width=15)
+		self.username_label.pack(side='left')
+		self.username_entry.pack(side='left')
+
+		self.bottom_frame = tkinter.Frame(self.main_window)
+		self.submit_button = tkinter.Button(self.bottom_frame, text='Submit', command=self.submit)
+		self.quit_button = tkinter.Button(self.bottom_frame, text='Quit', command=main_window_destroy)
+		self.submit_button.pack(side='left')
+		self.quit_button.pack(side='left')
+
+		self.top_frame.pack(side='left')
+		self.bottom_frame.pack(side='left')
+
+		tkinter.mainloop()
+
+	def submit(self):
+		username = str(self.username_entry.get())
+
+	def get_username(self):
+		return self.username
+
+# =========================================
+# 								GAME CLASS
 # =========================================
 
 class Game():
@@ -203,7 +265,7 @@ class Game():
 
 		# ------ GAME STATES -----------
 		self.BEGIN = 0
-		self.MENU = 1
+		self.USERNAME = 1
 
 		# ------ GLOBAL VARIABLES ------
 		self.gameState = self.BEGIN ## to start
@@ -216,17 +278,13 @@ class Game():
 		if self.gameState == self.BEGIN:
 			gui.begin_screen()
 
-			# for gesture in frame.gestures():
-			# 	if gesture.type == Leap.Gesture.TYPE_SWIPE:
-			# 		print 'Swipe Detected'
-			# 		gui.clear_begin_screen()
-
 			if handPresent == 1:
 				gui.clear_begin_screen()
-				self.gameState = self.MENU
+				self.gameState = self.USERNAME
 
-		elif self.gameState == self.MENU:
-			gui.draw_hand(frame)
+		elif self.gameState == self.USERNAME:
+			gui.username_screen()
+			# gui.draw_hand or somet shit this was last working thing
 
 # =========================================
 # 								MAIN SETUP
@@ -242,6 +300,7 @@ def main():
 	gui.splash_screen()
 
 	gui.setup_beginPanel()
+	gui.setup_usernamePanel()
 	gui.setup_handPanel()
 
 	# then continue on with the MAIN GAME LOOP
@@ -264,5 +323,7 @@ if __name__ == '__main__':
 	controller = Leap.Controller()
 	gui = GUI()
 	game = Game()
+
+	usernameGui = UsernameGUI()
 
 	main()
