@@ -82,7 +82,7 @@ class GUI():
 		# ------ WINDOW SETTINGS  ------
 		mpl.interactive(True)
 		mpl.rcParams['toolbar'] = 'None'
-		self.fig = plt.figure(figsize=(15,10), facecolor='black', tight_layout=True)
+		self.fig = plt.figure('signum', figsize=(15,10), facecolor='black', tight_layout=True)
 		#self.fig.canvas.set_window_title('signum')
 
 		# ------ PANEL INITS -----------
@@ -174,9 +174,9 @@ class GUI():
 			# self.backgroundPanel.imshow(image)
 			plt.figimage(image)
 
-			self.lvl1_need_dis = False
+			self.lvl1_need_dis = False # right now game doesn't allow users to revisit levels...because of this flag
 
-		# if the previous gesture number is different that this new call, change stuff
+		# if the previous gesture number is different than this new call, change stuff
 		if self.prevGestNum != gestureNum:
 			imageLocation = self.gestureImages[gestureNum]
 			image = mpimg.imread(imageLocation)
@@ -214,7 +214,7 @@ class GUI():
 			for i in range(0,5):
 				finger = hand.fingers[i]
 
-				for j in range(0,3):
+				for j in range(0,4):
 					bone = finger.bone(j)
 
 					boneBase = bone.prev_joint
@@ -251,6 +251,9 @@ class GUI():
 	def timer_progressBar(self):
 		''
 
+	# def gesture_status(self):
+	# 	self.lines.appemd(self.handPanel.plot([],[150,150],[450,450]))
+
 	def exit_screen(self):
 		if self.exit_need_dis:
 			self.clear_hand_tracing()
@@ -275,20 +278,29 @@ class GUI():
 class Game():
 	def __init__(self):
 
-		# ------ GAME STATES -----------
+		# ------ GAME CONSTANTS -----------
+		# Game States
 		self.BEGIN = 0
 		self.MENU = 1
 		self.GAME_IN_PROGRESS = 3
 		self.EXIT = 4
 
+		# Menu States
 		self.EXIT_VAL = 0
 		self.LEVEL_1 = 1
 		self.LEVEL_2 = 2
 		self.LEVEL_3 = 3
 
+		# Phase States
+		self.PHASE_1 = 1
+		self.PHASE_2 = 2
+		self.PHASE_3 = 3 
+
+		# Gesture Correct/Incorrect
 		self.CHECK = 0
 		self.WRONG = 1
 
+		# Progress Bar Params
 		self.RESTART = 75
 		self.END = -75
 
@@ -296,24 +308,28 @@ class Game():
 		self.testData = np.zeros((1,30),dtype='f')
 		self.gameState = self.BEGIN ## to start
 		self.gameLvl = None
+		self.levelPhase = self.PHASE_1
 		self.resetStartTime = True
 		self.startTime = 0
 		self.onTrack = None
 
 		# self.gestureNum = random.randint(0,9)
-		self.gestureNum = 0
+		self.gestureNum = 8 #0
 
 		self.progress = self.RESTART
+
+		self.trialTime = 0
+		self.gestureTime = {0:0, 1:0, 2:0, 3:0, 4:0, 5:0, 6:0, 7:0, 8:0, 9:0}
+		self.redoList = []
 
 	def game_loop(self):
 		frame = controller.frame()
 		hands_in_frame = len(frame.hands)
-
 		self.gather_testData(frame) # constantly reading hand
 
-		# ========================
-		# GAME STATE PROCESS =====
-		# ========================
+	# ========================
+	# GAME STATE PROCESS =====
+	# ========================
 
 		if self.gameState == self.BEGIN:
 			gui.begin_screen()
@@ -322,36 +338,35 @@ class Game():
 				self.gameState = self.MENU
 
 		elif self.gameState == self.MENU:
-			gui.draw_hand(frame, '#256E5E') ############# DISPLAY MENU HUR
+			gui.draw_hand(frame, '#256E5E')
 			gui.menu_screen()
 			gui.menu_choiceBar(self.progress)
 
 			if hands_in_frame == 1:
 				predictedGesture = self.predict_data(self.testData)
-				# gui.menu_choiceBar(self.progress)
 
 				if int(predictedGesture) == self.LEVEL_1:
 					self.onTrack = self.LEVEL_1
 					self.progress -= 10 ## this is the incrementer...the timer
 					if self.progress <= self.END:
-						self.gameLvl = self.LEVEL_1
 						self.gameState = self.GAME_IN_PROGRESS
+						self.gameLvl = self.LEVEL_1
 						self.progress = self.RESTART
 
 				elif int(predictedGesture) == self.LEVEL_2:
 					self.onTrack = self.LEVEL_2
 					self.progress -= 10
 					if self.progress <= self.END:
-						self.gameLvl = self.LEVEL_2
 						self.gameState = self.GAME_IN_PROGRESS
+						self.gameLvl = self.LEVEL_2
 						self.progress = self.RESTART
 
 				elif int(predictedGesture) == self.LEVEL_3:
 					self.onTrack = self.LEVEL_3
 					self.progress -= 10
 					if self.progress <= self.END:
-						self.gameLvl = self.LEVEL_3
 						self.gameState = self.GAME_IN_PROGRESS
+						self.gameLvl = self.LEVEL_3
 						self.progress = self.RESTART
 
 				elif int(predictedGesture) == self.EXIT_VAL:
@@ -360,8 +375,11 @@ class Game():
 					if self.progress <= self.END:
 						self.gameState = self.EXIT
 
-				if int(predictedGesture) != self.onTrack:
+				if int(predictedGesture) != self.onTrack: # ENFORCES HOLD
 					self.progress = self.RESTART
+
+			else: # if hand leaves frame, more than one hand in frame
+				self.progress = self.RESTART
 
 		elif self.gameState == self.GAME_IN_PROGRESS:
 			predictedGesture = self.predict_data(self.testData)
@@ -371,40 +389,122 @@ class Game():
 		# ================
 
 			if self.gameLvl == self.LEVEL_1:
-				gui.level_one_screen(self.gestureNum)
-
 				gui.draw_hand(frame,'#007340')
+				gui.level_one_screen(self.gestureNum)
 				gui.user_progressBar(self.progress)
 
-				if self.resetStartTime: # restart the timer when new gest goes up ^
+				if self.resetStartTime:
 					self.startTime = time.time()
 					self.resetStartTime = False
 
-				if int(predictedGesture) == self.gestureNum:
-					self.progress -= 10
+				if self.levelPhase == self.PHASE_1:
 
-					if self.progress <= self.END:
-						elapsed = time.time() - self.startTime
+					if hands_in_frame == 1:
+						if int(predictedGesture) == self.gestureNum:
+							self.progress -= 10
 
-						db.add_time(self.gestureNum, elapsed)
-						db.add_attempt(self.gestureNum)
+							if self.progress <= self.END:
+								thread.start_new_thread(self.correct, ())
+								gui.clear_gesturePanel()
+								gui.clear_digitPanel()
 
-						thread.start_new_thread(self.correct, ())
+								elapsed = time.time() - self.startTime
 
+								self.gestureTime[self.gestureNum] = elapsed
+
+								db.add_time(self.gestureNum, elapsed)
+								db.add_attempt(self.gestureNum)
+
+								self.progress = self.RESTART
+								self.resetStartTime = True
+
+								if self.gestureNum < 9:
+									self.gestureNum += 1
+
+								elif self.gestureNum == 9: #SETUP FOR PHASE 2
+									for i in self.gestureTime: # i = gestNum
+										self.trialTime += self.gestureTime[i]
+									for i in self.gestureTime:
+										if self.gestureTime[i] > (self.trialTime/10): # find the gests that took you too long...
+											self.redoList.append(i)
+
+									self.gestureNum = self.redoList[0]
+									self.levelPhase = self.PHASE_2
+
+					else:
 						self.progress = self.RESTART
-						gui.clear_gesturePanel()
-						gui.clear_digitPanel()
 
-						self.resetStartTime = True
+				elif self.levelPhase == self.PHASE_2:
+					
+					if hands_in_frame == 1:
+						if int(predictedGesture) == self.gestureNum:
+							self.progress -= 10
 
-						if self.gestureNum < 9:
-							self.gestureNum += 1
+							if self.progress <= self.END:
+								thread.start_new_thread(self.correct, ())
+								gui.clear_gesturePanel()
+								gui.clear_digitPanel()
 
-						elif self.gestureNum == 9:
-							'first round is complete, take out the digits'
-							'change the phase to something new, gen new gestnum'
-							print 'Completed Stg 1'
-							self.gestureNum = 0
+								elapsed = time.time() - self.startTime
+
+								db.add_time(self.gestureNum, elapsed)
+								db.add_attempt(self.gestureNum)
+
+								self.progress = self.RESTART
+								self.resetStartTime = True
+
+								self.redoList.remove(self.redoList[0])
+
+								if len(self.redoList) > 0:
+									self.gestureNum = self.redoList[0]
+
+								elif len(self.redoList) == 0: # SETUP FOR 3
+									self.gestureNum = random.randint(0, 9)
+									self.levelPhase = self.PHASE_3
+
+					else:
+						self.progress = self.RESTART
+
+				elif self.levelPhase == self.PHASE_3:
+					
+					if hands_in_frame == 1:
+						if int(predictedGesture) == self.gestureNum:
+							self.progress -= 10
+
+							if self.progress <= self.END:
+								thread.start_new_thread(self.correct, ())
+								gui.clear_gesturePanel()
+								gui.clear_digitPanel()
+
+								elapsed = time.time() - self.startTime
+
+								db.add_time(self.gestureNum, elapsed)
+								db.add_attempt(self.gestureNum)
+
+								self.progress = self.RESTART
+								self.resetStartTime = True
+
+								self.redoList.remove(self.redoList[0])
+
+								if len(self.redoList) > 0:
+									self.gestureNum = self.redoList[0]
+
+								elif len(self.redoList) == 0: # finish level 1
+
+					else:
+						self.progress = self.RESTART
+
+
+				# 			elif self.levelPhase == self.PHASE_3:
+				# 				# if DID ALL 10 GESTURES AGAIN IN RANDOM ORDER
+				# 					# db.completed_lvl1()
+				# 					# self.gestureNum = 0
+
+				# 					# display congrats, u fin level 1
+				# 					# self.gameState = self.MENU 
+
+# get this working, implement menu screen updating according to levels that u unlocked
+# using T/F in the DB
 
 		# ================
 		# LEVEL 2 ========
