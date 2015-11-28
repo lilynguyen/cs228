@@ -3,7 +3,12 @@ import os
 import thread
 import threading
 import time
+import random
 import Leap
+import pickle
+import numpy as np
+
+from database import Database
 
 from Leap import CircleGesture, KeyTapGesture, ScreenTapGesture, SwipeGesture
 from mpl_toolkits.mplot3d import Axes3D
@@ -16,7 +21,7 @@ import matplotlib.image as mpimg
 import matplotlib.gridspec as gridspec
 
 # =========================================
-# 								GUI CLASS
+# GUI CLASS ===============================
 # =========================================
 
 class GUI():
@@ -45,57 +50,63 @@ class GUI():
 			'./images/digit8.png', 
 			'./images/digit9.png']
 
-		self.positionImages = ['./images/centered.png',
-			'./images/left.png',
-			'./images/right.png',
-			'./images/over.png']
-
 		self.statusImages = ['./images/check.png',
-			'./iamges/x.png']
+			'./images/wrong.png',
+			'./images/0n.png', './images/0a.png',
+			'./images/1n.png', './images/1a.png',
+			'./images/2n.png', './images/2a.png',
+			'./images/3n.png', './images/3a.png',
+			'./images/4n.png', './images/4a.png',
+			'./images/5n.png', './images/5a.png',
+			'./images/6n.png', './images/6a.png',
+			'./images/7n.png', './images/7a.png',
+			'./images/8n.png', './images/8a.png',
+			'./images/9n.png', './images/9a.png']
 
 		self.programImages = ['./images/logo.png',
 			'./images/begin.png',
-			'./images/hover.png',
-			'./images/username.png']
+			'./images/exit.png',
+			'./images/black.png',
+			'./images/lvlsbg1.png',]
 
 		# ------ GLOBAL VARIABLES ------
 		self.lines = []
-		self.begin_dis_already = False
-		self.username_dis_already = False
+
+		self.begin_need_dis = True
+		self.menu_need_dis = True
+		self.lvl1_need_dis = True
+		self.exit_need_dis = True
+
+		self.prevGestNum = None
 
 		# ------ WINDOW SETTINGS  ------
 		mpl.interactive(True)
 		mpl.rcParams['toolbar'] = 'None'
-		self.fig = plt.figure(figsize=(15,10), facecolor='black')
+		self.fig = plt.figure(figsize=(15,10), facecolor='black', tight_layout=True)
 		#self.fig.canvas.set_window_title('signum')
 
 		# ------ PANEL INITS -----------
-		self.splashPanel = ''
-		self.beginPanelTitle = ''
-		self.beginPanelImg = ''
-		self.handPanel = ''
+		self.backgroundPanel = None
+		self.gesturePanel = None
+		self.digitPanel = None
+		self.statusPanel = None
+		self.handPanel = None
 
-	def setup_splashPanel(self):
-		self.splashPanel = self.fig.add_subplot(111)
-		self.splashPanel.axis('off')
+	def setup_backgroundPanel(self):
+		self.backgroundPanel = self.fig.add_subplot(111)
+		self.backgroundPanel.axis('off')
 
-	def setup_beginPanel(self):
-		gs = gridspec.GridSpec(5,1)
+	def setup_lvlOne(self):
+		gs = gridspec.GridSpec(4,10)
 
-		self.beginPanelTitle = self.fig.add_subplot(gs[0,0])
-		self.beginPanelTitle.axis('off')
+		self.gesturePanel = self.fig.add_subplot(gs[1,1])
+		self.gesturePanel.axis('off')
 
-		self.beginPanelImg = self.fig.add_subplot(gs[1:4,0])
-		self.beginPanelImg.axis('off')
+		self.digitPanel = self.fig.add_subplot(gs[2,1])
+		self.digitPanel.axis('off')
 
-	def setup_usernamePanel(self):
-		gs = gridspec.GridSpec(5,1)
-
-		self.usernamePanelTitle = self.fig.add_subplot(gs[0,0])
-		self.usernamePanelTitle.axis('off')
-
-		self.usernamePanelButton = self.fig.add_subplot(gs[1:4,0])
-		self.usernamePanelButton.axis('off')
+		self.statusPanel = self.fig.add_subplot(gs[1,8])
+		self.statusPanel.axis('off')
 
 	def setup_handPanel(self):
 		self.handPanel = self.fig.add_subplot(111, projection='3d', axisbg='none', frame_on=False)
@@ -104,8 +115,97 @@ class GUI():
 		self.handPanel.set_ylim(150,200)
 		self.handPanel.set_zlim(400,550)
 		self.handPanel.axis('off')
-#-----------------------------------------------
-	def draw_hand(self, frame):
+
+	def splash_screen(self):
+		# all in one because splash occurs once and only once
+		# modularize if u rly think necc but not rly lol
+
+		# YO YOU CAN IMPLEMENT THIS AS A THREAD!
+
+		imageLocation = self.programImages[0]
+		image = mpimg.imread(imageLocation)
+		self.backgroundPanel.imshow(image)
+		# plt.figimage(image)
+		plt.draw()
+
+		time.sleep(2)
+
+		self.backgroundPanel.clear()
+		self.backgroundPanel.axis('off')
+
+		plt.draw()
+
+	def begin_screen(self):
+		if self.begin_need_dis:
+			imageLocation = self.programImages[1]
+			image = mpimg.imread(imageLocation)
+			self.backgroundPanel.imshow(image)
+			# plt.figimage(image)
+			plt.draw()
+
+			self.begin_need_dis = False
+
+	def clear_begin_screen(self):
+		self.backgroundPanel.clear()
+		self.backgroundPanel.axis('off')
+		plt.draw()
+
+	def menu_screen(self):
+		if self.menu_need_dis:
+			imageLocation = self.programImages[4]
+			image = mpimg.imread(imageLocation)
+			# self.backgroundPanel.imshow(image)
+			plt.figimage(image)
+
+			self.menu_need_dis = False
+
+	def menu_choiceBar(self, progress):
+		if progress == 75:
+			c = 'k'
+		elif progress < 75:
+			c = 'b'
+		self.lines.append(self.handPanel.plot([progress,75], [165,165], [450,450], \
+			color=c, linewidth=10, solid_capstyle='round', ))
+
+	def level_one_screen(self, gestureNum):
+		if self.lvl1_need_dis:
+			imageLocation = self.programImages[3]
+			image = mpimg.imread(imageLocation)
+			# self.backgroundPanel.imshow(image)
+			plt.figimage(image)
+
+			self.lvl1_need_dis = False
+
+		# if the previous gesture number is different that this new call, change stuff
+		if self.prevGestNum != gestureNum:
+			imageLocation = self.gestureImages[gestureNum]
+			image = mpimg.imread(imageLocation)
+			self.gesturePanel.imshow(image)
+
+			imageLocation = self.digitImages[gestureNum]
+			image = mpimg.imread(imageLocation)
+			self.digitPanel.imshow(image)
+
+			self.prevGestNum = gestureNum
+
+	def clear_gesturePanel(self):
+		self.gesturePanel.clear()
+		self.gesturePanel.axis('off')
+
+	def clear_digitPanel(self):
+		self.digitPanel.clear()
+		self.digitPanel.axis('off')
+
+	def update_statusPanel(self, phase):
+		imageLocation = self.statusImages[phase]
+		image = mpimg.imread(imageLocation)
+		self.statusPanel.imshow(image)
+
+	def clear_statusPanel(self):
+		self.statusPanel.clear()
+		self.statusPanel.axis('off')
+
+	def draw_hand(self, frame, c):
 		hands = frame.hands
 
 		if len(hands):
@@ -128,10 +228,10 @@ class GUI():
 					zBase = boneBase[2]
 
 					self.lines.append(self.handPanel.plot([-xBase,-xTip],[zBase,zTip],[yBase,yTip], \
-						color='red', linewidth=25, solid_capstyle='round'))
+						color=c, linewidth=25, solid_capstyle='round'))
 
-			plt.draw()
-			self.clear_hand_tracing()
+		plt.draw() # SO IMPORTANT #
+		self.clear_hand_tracing()
 
 	def clear_hand_tracing(self):
 		while (len(self.lines) > 0):
@@ -139,169 +239,276 @@ class GUI():
 			ln.pop(0).remove()
 			del ln
 			ln = []
-#-----------------------------------------------
-	def splash_screen(self):
-		imageLocation = self.programImages[0]
-		image = mpimg.imread(imageLocation)
-		self.splashPanel.imshow(image)
-		plt.draw()
 
-		time.sleep(2)
+	def user_progressBar(self, progress):
+		if progress == 75:
+			c = 'k'
+		elif progress < 75:
+			c = 'b'
+		self.lines.append(self.handPanel.plot([progress,75], [165,165], [450,450], \
+			color=c, linewidth=10, solid_capstyle='round', ))
 
-		self.fig.delaxes(self.splashPanel)
-		plt.draw()
+	def timer_progressBar(self):
+		''
 
-		## all in one because splash occurs once and only once
-		## modularize if u rly think necc but not rly lol
-
-	def begin_screen(self):
-		if self.begin_dis_already == False: # ensure that image only gets added once to prev lag
-			
-			imageLocation = self.programImages[1]
-			image = mpimg.imread(imageLocation)
-			self.beginPanelTitle.imshow(image)
-
-			imageLocation = self.programImages[2]
-			image = mpimg.imread(imageLocation)
-			self.beginPanelImg.imshow(image)
-
-			plt.draw()
-
-			self.begin_dis_already = True
-
-	def clear_begin_screen(self):
-		self.beginPanelTitle.clear()
-		self.beginPanelTitle.axis('off')
-
-		#self.fig.delaxes(self.beginPanel) # DELETE SUBPLOT, sim. to clear, axis off
-		self.beginPanelImg.clear()
-		self.beginPanelImg.axis('off')
-		plt.draw()
-
-	def username_screen(self):
-		if self.username_dis_already == False:
+	def exit_screen(self):
+		if self.exit_need_dis:
+			self.clear_hand_tracing()
 
 			imageLocation = self.programImages[3]
 			image = mpimg.imread(imageLocation)
-			self.usernamePanelTitle.imshow(image)
+			plt.figimage(image)
 
-			buttonUsername = Button(self.usernamePanelButton, 'Enter')
-			buttonUsername.on_clicked(usernameGui.create_window)
-
-			#return usernameGui.get_username()
+			imageLocation = self.programImages[2]
+			image = mpimg.imread(imageLocation)
+			# self.backgroundPanel.imshow(image)
+			plt.figimage(image)
 
 			plt.draw()
 
-			self.username_dis_already == True
+			self.exit_need_dis = False
 
 # =========================================
-# 					LEAP MOTION LISTENER
-# =========================================
-
-class LeapListener(Leap.Listener):
-	def on_init(self, controller):
-		print 'Listener Added to Controller'
-
-	def on_connect(self, controller):
-		print 'LM: Device Connected'
-		controller.enable_gesture(Leap.Gesture.TYPE_CIRCLE);
-		controller.enable_gesture(Leap.Gesture.TYPE_KEY_TAP);
-		controller.enable_gesture(Leap.Gesture.TYPE_SCREEN_TAP);
-		controller.enable_gesture(Leap.Gesture.TYPE_SWIPE);
-
-	def on_disconnect(self, controller):
-		print 'LM" Device Disconnected'
-
-	def on_device_failure(self, controller):
-		print 'LM: Device Failed'
-
-	def on_frame(self, controller):
-		#CONSTANTLY CAPTURING, THIS IS THE MAIN LOOP
-		#print 'LM: Frame Capturing' 
-		game.game_loop()
-
-# =========================================
-# 					TKINTER USERNAME CLASS
-# =========================================
-
-class UsernameGUI():
-	def __init__(self):
-		self.username = ''
-
-	def create_window(self, event):
-		self.main_window = tkinter.Tk()
-
-		self.top_frame = tkinter.Frame(self.main_window)
-		self.username_label = tkinter.Label(self.top_frame, text='Enter Username:')
-		self.username_entry = tkinter.Entry(self.top_frame, width=15)
-		self.username_label.pack(side='left')
-		self.username_entry.pack(side='left')
-
-		self.bottom_frame = tkinter.Frame(self.main_window)
-		self.submit_button = tkinter.Button(self.bottom_frame, text='Submit', command=self.submit)
-		self.quit_button = tkinter.Button(self.bottom_frame, text='Quit', command=main_window_destroy)
-		self.submit_button.pack(side='left')
-		self.quit_button.pack(side='left')
-
-		self.top_frame.pack(side='left')
-		self.bottom_frame.pack(side='left')
-
-		tkinter.mainloop()
-
-	def submit(self):
-		username = str(self.username_entry.get())
-
-	def get_username(self):
-		return self.username
-
-# =========================================
-# 								GAME CLASS
+# GAME CLASS ==============================
 # =========================================
 
 class Game():
 	def __init__(self):
-		
-		# gui.setup_handPanel()
 
 		# ------ GAME STATES -----------
 		self.BEGIN = 0
-		self.USERNAME = 1
+		self.MENU = 1
+		self.GAME_IN_PROGRESS = 3
+		self.EXIT = 4
+
+		self.EXIT_VAL = 0
+		self.LEVEL_1 = 1
+		self.LEVEL_2 = 2
+		self.LEVEL_3 = 3
+
+		self.CHECK = 0
+		self.WRONG = 1
+
+		self.RESTART = 75
+		self.END = -75
 
 		# ------ GLOBAL VARIABLES ------
+		self.testData = np.zeros((1,30),dtype='f')
 		self.gameState = self.BEGIN ## to start
+		self.gameLvl = None
+		self.resetStartTime = True
+		self.startTime = 0
+		self.onTrack = None
+
+		# self.gestureNum = random.randint(0,9)
+		self.gestureNum = 0
+
+		self.progress = self.RESTART
 
 	def game_loop(self):
-
 		frame = controller.frame()
-		handPresent = len(frame.hands)
+		hands_in_frame = len(frame.hands)
+
+		self.gather_testData(frame) # constantly reading hand
+
+		# ========================
+		# GAME STATE PROCESS =====
+		# ========================
 
 		if self.gameState == self.BEGIN:
 			gui.begin_screen()
-
-			if handPresent == 1:
+			if hands_in_frame == 1: ## WHERE SWIPE WOULD GO 
 				gui.clear_begin_screen()
-				self.gameState = self.USERNAME
+				self.gameState = self.MENU
 
-		elif self.gameState == self.USERNAME:
-			gui.username_screen()
-			# gui.draw_hand or somet shit this was last working thing
+		elif self.gameState == self.MENU:
+			gui.draw_hand(frame, '#256E5E') ############# DISPLAY MENU HUR
+			gui.menu_screen()
+			gui.menu_choiceBar(self.progress)
+
+			if hands_in_frame == 1:
+				predictedGesture = self.predict_data(self.testData)
+				# gui.menu_choiceBar(self.progress)
+
+				if int(predictedGesture) == self.LEVEL_1:
+					self.onTrack = self.LEVEL_1
+					self.progress -= 10 ## this is the incrementer...the timer
+					if self.progress <= self.END:
+						self.gameLvl = self.LEVEL_1
+						self.gameState = self.GAME_IN_PROGRESS
+						self.progress = self.RESTART
+
+				elif int(predictedGesture) == self.LEVEL_2:
+					self.onTrack = self.LEVEL_2
+					self.progress -= 10
+					if self.progress <= self.END:
+						self.gameLvl = self.LEVEL_2
+						self.gameState = self.GAME_IN_PROGRESS
+						self.progress = self.RESTART
+
+				elif int(predictedGesture) == self.LEVEL_3:
+					self.onTrack = self.LEVEL_3
+					self.progress -= 10
+					if self.progress <= self.END:
+						self.gameLvl = self.LEVEL_3
+						self.gameState = self.GAME_IN_PROGRESS
+						self.progress = self.RESTART
+
+				elif int(predictedGesture) == self.EXIT_VAL:
+					self.onTrack = self.EXIT_VAL
+					self.progress -= 10
+					if self.progress <= self.END:
+						self.gameState = self.EXIT
+
+				if int(predictedGesture) != self.onTrack:
+					self.progress = self.RESTART
+
+		elif self.gameState == self.GAME_IN_PROGRESS:
+			predictedGesture = self.predict_data(self.testData)
+
+		# ================
+		# LEVEL 1 ========
+		# ================
+
+			if self.gameLvl == self.LEVEL_1:
+				gui.level_one_screen(self.gestureNum)
+
+				gui.draw_hand(frame,'#007340')
+				gui.user_progressBar(self.progress)
+
+				if self.resetStartTime: # restart the timer when new gest goes up ^
+					self.startTime = time.time()
+					self.resetStartTime = False
+
+				if int(predictedGesture) == self.gestureNum:
+					self.progress -= 10
+
+					if self.progress <= self.END:
+						elapsed = time.time() - self.startTime
+
+						db.add_time(self.gestureNum, elapsed)
+						db.add_attempt(self.gestureNum)
+
+						thread.start_new_thread(self.correct, ())
+
+						self.progress = self.RESTART
+						gui.clear_gesturePanel()
+						gui.clear_digitPanel()
+
+						self.resetStartTime = True
+
+						if self.gestureNum < 9:
+							self.gestureNum += 1
+
+						elif self.gestureNum == 9:
+							'first round is complete, take out the digits'
+							'change the phase to something new, gen new gestnum'
+							print 'Completed Stg 1'
+							self.gestureNum = 0
+
+		# ================
+		# LEVEL 2 ========
+		# ================
+
+			elif self.gameLvl == self.LEVEL_2:
+				gui.draw_hand(frame,'b')
+				# gui.level_one_screen()
+
+		# ================
+		# LEVEL 3 ========
+		# ================
+
+			elif self.gameLvl == self.LEVEL_3:
+				gui.draw_hand(frame,'g')
+				# gui.level_one_screen()
+
+		elif self.gameState == self.EXIT:
+			self.exit_game()
+
+	def correct(self):
+		gui.update_statusPanel(self.CHECK)
+		time.sleep(2)
+		gui.clear_statusPanel()
+
+	def exit_game(self):
+		gui.exit_screen()
+		time.sleep(2)
+		plt.close()
+		# PRESS ENTER TO QUIT
+
+	def center_data(self, testData):
+	  allXCoordinates = self.testData[0,::3]
+	  meanValue = allXCoordinates.mean()
+	  self.testData[0,::3] = allXCoordinates - meanValue
+
+	  allYCoordinates = self.testData[0,1::3]
+	  meanValue = allYCoordinates.mean()
+	  self.testData[0,1::3] = allYCoordinates - meanValue
+
+	  allZCoordinates = self.testData[0,2::3]
+	  meanValue = allZCoordinates.mean()
+	  self.testData[0,2::3] = allZCoordinates - meanValue
+	  return self.testData
+
+	def predict_data(self, testData):
+		centeredData = self.center_data(testData)
+		predictedGesture = clf.predict(centeredData)
+		return predictedGesture
+
+	def gather_testData(self, frame):
+		k = 0
+		hand = frame.hands[0]
+
+		for i in range(0,5):
+			finger = hand.fingers[i]
+
+			for j in range (0,4):
+				bone = finger.bone(j)
+				boneBase = bone.prev_joint
+				boneTip = bone.next_joint
+
+				xTip = boneTip[0]
+				yTip = boneTip[1]
+				zTip = boneTip[2]
+				xBase = boneBase[0]
+				yBase = boneBase[1]
+				zBase = boneBase[2]
+
+				if ((j == 0) | (j == 3)):
+					self.testData[0,k] = xTip
+					self.testData[0,k+1] = yTip
+					self.testData[0,k+2] = zTip
+					k = k + 3
 
 # =========================================
-# 								MAIN SETUP
+# MAIN SETUP ==============================
 # =========================================
 
 def main():
 	print 'Press Enter to Quit...'
 
 	# ------ GUTS ------------------
+	# userName = get_username()
+	# db = Database(userName, dbFile)
+	userExists = db.user_exists()
+	userNameFormatted = get_formatted_username(userName)
 
-	# one time thing for aesthetics
-	gui.setup_splashPanel()
+	if userExists:
+		db.add_login()
+		print('Welcome back ' + userNameFormatted + '!')
+	else:
+		db.create_profile()
+		db.add_login()
+		print('Welcome ' + userNameFormatted + '!')
+
+	##############
+
+	gui.setup_backgroundPanel()
+
 	gui.splash_screen()
 
-	gui.setup_beginPanel()
-	gui.setup_usernamePanel()
 	gui.setup_handPanel()
+	gui.setup_lvlOne()
 
 	# then continue on with the MAIN GAME LOOP
 	leapListener = LeapListener()
@@ -309,21 +516,66 @@ def main():
 
 	# ------ END PROGRAM -----------
 	try:
-		sys.stdin.readline()
+		sys.stdin.readline() # change this to control how program ends
 	except KeyboardInterrupt:
 		pass
 	finally:
 		controller.remove_listener(leapListener)
 
 # =========================================
-# 								RUN PROGRAM
+# MOD LVL FCNS ============================
+# =========================================
+
+def get_username():
+	# userName = raw_input('Enter Name: ')
+	userName = 'LILY'
+	userNameLower = userName.lower()
+	return userNameLower
+
+def get_formatted_username(userName):
+	userNameFormatted = userName[0].upper() + userName[1:]
+	return userNameFormatted
+
+
+# =========================================
+# LEAP MOTION LISTENER ====================
+# =========================================
+
+class LeapListener(Leap.Listener):
+	def on_init(self, controller):
+		print 'Listener Added to Controller'
+
+	def on_connect(self, controller):
+		print 'Leap Motion Device Connected'
+		controller.enable_gesture(Leap.Gesture.TYPE_CIRCLE);
+		controller.enable_gesture(Leap.Gesture.TYPE_KEY_TAP);
+		controller.enable_gesture(Leap.Gesture.TYPE_SCREEN_TAP);
+		controller.enable_gesture(Leap.Gesture.TYPE_SWIPE);
+
+	def on_disconnect(self, controller):
+		print 'Leap Motion Device Disconnected'
+
+	def on_device_failure(self, controller):
+		print 'Leap Motion Device Failed'
+
+	def on_frame(self, controller):
+		#CONSTANTLY CAPTURING, THIS IS THE MAIN LOOP
+		#print 'Leap Motion Frame Capturing' 
+		game.game_loop()
+
+# =========================================
+# RUN PROGRAM =============================
 # =========================================
 
 if __name__ == '__main__':
+	dbFile = pickle.load(open('userData/database.p','rb'))
+	clf = pickle.load(open('userData/classifier.p','rb'))
+
 	controller = Leap.Controller()
 	gui = GUI()
 	game = Game()
 
-	usernameGui = UsernameGUI()
+	userName = get_username() #
+	db = Database(userName, dbFile) #
 
 	main()

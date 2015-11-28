@@ -109,6 +109,7 @@ class GUI():
 
 			image = mpimg.imread(imageLocation)
 			self.gesturePanel.imshow(image)
+			plt.draw()
 			time.sleep(1)
 
 	def updateCountPanel(self, gestureNum, phase, database, userName):
@@ -158,6 +159,8 @@ UPDATE_NUM = 1
 
 CORRECT = 0
 INCORRECT = 1
+
+CHECK = 0
 
 CENTER_RANGE = 100
 
@@ -261,6 +264,7 @@ def main():
 				gui.updatePositionPanel(CENTER)
 
 				predictedGesture = predict_data(testData, clf)
+				print predictedGesture
 
 				if int(predictedGesture) == gestureNum:
 					gui.updateCountPanel(gestureNum, UPDATE_NUM, database, userName)

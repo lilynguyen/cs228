@@ -1,4 +1,6 @@
-# RESETS THE DICTIONARY
+# =========================================
+# RESET/ERASE DATABASE ====================
+# =========================================
 
 import pickle
 dictionary = {}
