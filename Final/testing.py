@@ -314,7 +314,7 @@ class Game():
 		self.onTrack = None
 
 		# self.gestureNum = random.randint(0,9)
-		self.gestureNum = 8 #0
+		self.gestureNum = 0
 
 		self.progress = self.RESTART
 
@@ -338,7 +338,7 @@ class Game():
 				self.gameState = self.MENU
 
 		elif self.gameState == self.MENU:
-			gui.draw_hand(frame, '#256E5E')
+			gui.draw_hand(frame, '#ffffff')
 			gui.menu_screen()
 			gui.menu_choiceBar(self.progress)
 
@@ -389,7 +389,7 @@ class Game():
 		# ================
 
 			if self.gameLvl == self.LEVEL_1:
-				gui.draw_hand(frame,'#007340')
+				gui.draw_hand(frame,'red')
 				gui.level_one_screen(self.gestureNum)
 				gui.user_progressBar(self.progress)
 
@@ -430,6 +430,7 @@ class Game():
 
 									self.gestureNum = self.redoList[0]
 									self.levelPhase = self.PHASE_2
+									print 'ENTER PHASE 2'
 
 					else:
 						self.progress = self.RESTART
@@ -460,7 +461,9 @@ class Game():
 
 								elif len(self.redoList) == 0: # SETUP FOR 3
 									self.gestureNum = random.randint(0, 9)
+									self.redoList = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 									self.levelPhase = self.PHASE_3
+									print 'ENTER PHASE 3'
 
 					else:
 						self.progress = self.RESTART
@@ -484,24 +487,19 @@ class Game():
 								self.progress = self.RESTART
 								self.resetStartTime = True
 
-								self.redoList.remove(self.redoList[0])
+								self.redoList.remove(self.gestureNum)
 
 								if len(self.redoList) > 0:
-									self.gestureNum = self.redoList[0]
+									randomIndex = random.randint(0,len(self.redoList)-1) # fuck YOU CAN'T USE THE ITEM THAT WAS FIRST
+									self.gestureNum = self.redoList[randomIndex]
 
 								elif len(self.redoList) == 0: # finish level 1
+									self.gameState = self.MENU
+									gui.menu_need_dis = True
+									print 'MAIN MENU'
 
 					else:
 						self.progress = self.RESTART
-
-
-				# 			elif self.levelPhase == self.PHASE_3:
-				# 				# if DID ALL 10 GESTURES AGAIN IN RANDOM ORDER
-				# 					# db.completed_lvl1()
-				# 					# self.gestureNum = 0
-
-				# 					# display congrats, u fin level 1
-				# 					# self.gameState = self.MENU 
 
 # get this working, implement menu screen updating according to levels that u unlocked
 # using T/F in the DB
