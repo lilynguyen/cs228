@@ -30,7 +30,18 @@ class Database():
 			'digit7attempts' : 0, 
 			'digit8attempts' : 0, 
 			'digit9attempts' : 0,  
-			'digit0attempts' : 0, 
+			'digit0attempts' : 0,
+			'digit0fails' : 0, 
+			'digit1fails' : 0, 
+			'digit2fails' : 0, 
+			'digit3fails' : 0, 
+			'digit4fails' : 0, 
+			'digit5fails' : 0, 
+			'digit6fails' : 0, 
+			'digit7fails' : 0, 
+			'digit8fails' : 0, 
+			'digit9fails' : 0,  
+			'digit0fails' : 0, 
 			'digit0time' : 100, 
 			'digit1time' : 100, 
 			'digit2time' : 100, 
@@ -66,6 +77,15 @@ class Database():
 
 		self.save_database()
 
+	def add_fail(self, gestureNum):
+		digitString = 'digit'+str(gestureNum)+'fails'
+
+		self.userRecord[digitString] += 1
+
+		# print 'Adding 1 to', digitString
+
+		self.save_database()
+
 	def add_time(self, gestureNum, currTime):
 		timeString = 'digit'+str(gestureNum)+'time'
 
@@ -80,7 +100,7 @@ class Database():
 	def add_best_time(self, currTime):
 		if currTime < self.userRecord['besttime']:
 			self.userRecord['besttime'] = currTime
-			# print 'New best run time'
+		# 	print 'New best run time'
 		# else:
 		# 	print 'Run time slower than prev run'
 
@@ -89,9 +109,9 @@ class Database():
 	def add_score(self, roundPoints):
 		if roundPoints > self.userRecord['bestscore']:
 			self.userRecord['bestscore'] = roundPoints
-			# print 'New personal high score'
+		# 	print 'New personal high score'
 		# else:
-			# print 'Round score lower than current high score'
+		# 	print 'Round score lower than current high score'
 
 		self.save_database()
 
@@ -138,7 +158,7 @@ class Database():
 		self.save_database()
 
 	def earn_badge4(self):
-		print 'Achievement: High score over 10!'
+		print 'Achievement: High score over 30!'
 		self.userRecord['badge4'] = True
 		self.save_database()
 
@@ -158,35 +178,21 @@ class Database():
 		pickle.dump(self.database, open('userData/database.p','wb'))
 
 	def get_leaderboard(self):
-		leaderboard = []
+		leaderboard = {}#[]
 		highest = -1
-		highestUser = None
+		highestUser = 'None'
 		nhighest = -1
-		nhighestUser = None
+		nhighestUser = 'None'
 		nnhighest = -1
-		nnhighestUser = None
+		nnhighestUser = 'None'
 
 		for user in self.database:
-			if self.database[user]['bestscore'] > highest:
-				highest = self.database[user]['bestscore']
-				highestUser = user
-			else:
-				if self.database[user]['bestscore'] > nhighest:
-					nhighest = self.database[user]['bestscore']
-					nhighestUser = user
-				else:
-					if self.database[user]['bestscore'] > nnhighest:
-						nnhighest = self.database[user]['bestscore']
-						nnhighestUser = user
+			leaderboard[user] = self.database[user]['bestscore']
 
-		leaderboard.append(highestUser)
-		leaderboard.append(str(highest))
-		leaderboard.append(nhighestUser)
-		leaderboard.append(str(nhighest))
-		leaderboard.append(nnhighestUser)
-		leaderboard.append(str(nnhighest))
+		leaderboard = sorted(leaderboard.items(), key=lambda x: x[1])
 
 		return leaderboard
+
 
 	def display_profile(self):
 		pp = pprint.PrettyPrinter(indent=4)

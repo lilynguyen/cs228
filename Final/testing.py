@@ -235,10 +235,10 @@ class GUI():
 			image = mpimg.imread(imageLocation)
 			self.badge3Panel.imshow(image)
 
-		# if db.get_badge4() == True:
-		# 	imageLocation=self.badgeImages[3]
-		# 	image = mpimg.imread(imageLocation)
-		# 	self.badge4Panel.imshow(image)
+		if db.get_badge4() == True:
+			imageLocation=self.badgeImages[3]
+			image = mpimg.imread(imageLocation)
+			self.badge4Panel.imshow(image)
 
 	def clear_badges(self):
 		self.badge1Panel.clear()
@@ -373,6 +373,10 @@ class GUI():
 			self.backgroundPanel.text(400, 165, 'You completed all the game levels!', color='white', fontsize=20)
 			self.backgroundPanel.text(450, 190, 'Unlocked Achievement 3', color='white', fontsize=20)
 
+		elif num == 4:
+			self.backgroundPanel.text(400, 165, 'You scored over 30 points in level 3!', color='white', fontsize=20)
+			self.backgroundPanel.text(450, 190, 'Unlocked Achievement 4', color='white', fontsize=20)
+
 	def lvl3_ready(self):
 		self.backgroundPanel.text(520, 165, 'Get ready...', color='white', fontsize=20)
 		plt.draw()
@@ -397,6 +401,11 @@ class GUI():
 			image = mpimg.imread(imageLocation)
 			self.badgeEarnedPanel.imshow(image)
 			plt.draw()
+
+		elif num == 4:
+			imageLocation=self.badgeImages[3]
+			image = mpimg.imread(imageLocation)
+			self.badgeEarnedPanel.imshow(image)
 
 	def lvl_one_comp(self):
 		self.clear_hand_tracing()
@@ -547,9 +556,13 @@ class GUI():
 
 	def write_leaderb(self):
 		leaderb = db.get_leaderboard()
-		self.backgroundPanel.text(300, 100, '1: '+leaderb[0]+' '+leaderb[1], color='white', fontsize='60')
-		self.backgroundPanel.text(300, 200, '2: '+leaderb[2]+' '+leaderb[3], color='white', fontsize='60')
-		self.backgroundPanel.text(300, 300, '3: '+leaderb[4]+' '+leaderb[5], color='white', fontsize='60')
+		# self.backgroundPanel.text(300, 100, '1: '+leaderb[0]+' '+leaderb[1], color='white', fontsize='60')
+		# self.backgroundPanel.text(300, 200, '2: '+leaderb[2]+' '+leaderb[3], color='white', fontsize='60')
+		# self.backgroundPanel.text(300, 300, '3: '+leaderb[4]+' '+leaderb[5], color='white', fontsize='60')
+
+		self.backgroundPanel.text(300, 100, '1: '+leaderb[len(leaderb)-1][0]+' '+str(leaderb[len(leaderb)-1][1]), color='white', fontsize='60')
+		self.backgroundPanel.text(300, 200, '2: '+leaderb[len(leaderb)-2][0]+' '+str(leaderb[len(leaderb)-2][1]), color='white', fontsize='60')
+		self.backgroundPanel.text(300, 300, '3: '+leaderb[len(leaderb)-3][0]+' '+str(leaderb[len(leaderb)-3][1]), color='white', fontsize='60')
 
 # =========================================
 # GAME CLASS ==============================
@@ -739,6 +752,8 @@ class Game():
 									for i in self.gestureTime:
 										if self.gestureTime[i] > (self.trialTime/10): # find the gests that took you too long...
 											self.redoList.append(i)
+
+									db.add_best_time(self.trialTime)
 
 									self.gestureNum = self.redoList[0]
 									self.levelPhase = self.PHASE_2
@@ -945,7 +960,7 @@ class Game():
 						print 'ENTER PHASE OVER'
 
 					if self.time > self.END:
-						self.time -= 5
+						self.time -= 3
 
 						if hands_in_frame == 1:
 							if int(predictedGesture) == self.gestureNum:
@@ -958,6 +973,10 @@ class Game():
 									db.add_attempt(self.gestureNum)
 
 									self.roundPoints += 1
+
+									if self.roundPoints == 3:
+										db.earn_badge4()
+										thread.start_new_thread(self.badges, (4,))
 
 									self.progress = self.RESTART
 									self.time = self.RESTART
@@ -982,6 +1001,7 @@ class Game():
 						self.time = self.RESTART
 
 						self.lives -= 1
+						db.add_fail(self.gestureNum)
 
 						self.prevGestNum = self.gestureNum
 						self.gestureNum = random.randint(0,9)
@@ -1075,6 +1095,7 @@ class Game():
 		self.levelPhase = self.PHASE_1
 		self.trialTime = 0
 		self.resetStartTime = True
+		gui.prevGestNum = None
 
 	def badges(self, num):
 		gui.text_msg(num)
@@ -1151,7 +1172,6 @@ def main():
 	##############
 
 	db.display_profile()
-	db.get_leaderboard()
 
 	##############
 
