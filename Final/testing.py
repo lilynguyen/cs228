@@ -74,8 +74,12 @@ class GUI():
 			'./images/complvl1.png',
 			'./images/lvl1bg.png', #6
 			'./images/lvlsbg2.png', #7
-			'./images/lvlsbg3.png' #8
-		]
+			'./images/lvlsbg3.png', #8
+			'./images/lvl2bg.png', #9
+			'./images/lvl3bg.png', #10
+			'./images/complvl2.png', #11
+			'./images/complvl3.png' #12
+			]
 
 		self.badgeImages = ['./images/badge1.png',
 			'./images/badge2.png',
@@ -89,10 +93,11 @@ class GUI():
 		self.begin_need_dis = True
 		self.menu_need_dis = True
 		self.lvl1_need_dis = True
+		self.lvl2_need_dis = True
+		self.lvl3_need_dis_rdy = True
+		self.lvl3_need_dis = True
 		self.exit_need_dis = True
 		self.stat_need_dis = True
-
-		self.onecomp_need_dis = True
 
 		self.prevGestNum = None
 
@@ -203,6 +208,8 @@ class GUI():
 				imageLocation = self.programImages[7]
 			elif latest_level == 3:
 				imageLocation = self.programImages[8]
+			elif latest_level == 4:
+				imageLocation = self.programImages[8]
 
 			image = mpimg.imread(imageLocation)
 			self.f = plt.figimage(image)
@@ -218,15 +225,15 @@ class GUI():
 			image = mpimg.imread(imageLocation)
 			self.badge1Panel.imshow(image)
 
-		# if db.get_badge2() == True:
-		# 	imageLocation=self.badgeImages[1]
-		# 	image = mpimg.imread(imageLocation)
-		# 	self.badge2Panel.imshow(image)
+		if db.get_badge2() == True:
+			imageLocation=self.badgeImages[1]
+			image = mpimg.imread(imageLocation)
+			self.badge2Panel.imshow(image)
 
-		# if db.get_badge3() == True:
-		# 	imageLocation=self.badgeImages[2]
-		# 	image = mpimg.imread(imageLocation)
-		# 	self.badge3Panel.imshow(image)
+		if db.get_badge3() == True:
+			imageLocation=self.badgeImages[2]
+			image = mpimg.imread(imageLocation)
+			self.badge3Panel.imshow(image)
 
 		# if db.get_badge4() == True:
 		# 	imageLocation=self.badgeImages[3]
@@ -279,7 +286,7 @@ class GUI():
 
 			self.prevGestNum = gestureNum
 
-	def level_one_msg(self, phase):
+	def title_msg(self, phase):
 		if phase == 1:
 			string = 'Learn all the gestures!'
 		elif phase == 2:
@@ -288,8 +295,63 @@ class GUI():
 			string = 'Now try them all in random order!'
 		elif phase == 0:
 			string = 'Welcome ' + userNameFormatted + '!'
+		elif phase == 4:
+			string = 'Do you remember the signs of the digits?'
+		elif phase == 5:
+			string = 'Now try them all in random order!'
+		elif phase == 6:
+			string = 'Beat the clock! Sign as many gestures as you can!'
 
 		self.handPanel.set_title(string, color="white", size="xx-large")
+
+	def level_two_screen(self, gestureNum):
+		if self.lvl2_need_dis:
+			self.f.remove()
+			self.clear_badges()
+
+			imageLocation = self.programImages[9]
+			image = mpimg.imread(imageLocation)
+			self.f = plt.figimage(image)
+
+			self.lvl2_need_dis = False
+
+		# if the previous gesture number is different than this new call, change stuff
+		if self.prevGestNum != gestureNum:
+			imageLocation = self.digitImages[gestureNum]
+			image = mpimg.imread(imageLocation)
+			self.digitPanel.imshow(image)
+
+			self.prevGestNum = gestureNum
+
+	def level_three_screen_ready(self):
+		if self.lvl3_need_dis_rdy:
+			self.f.remove()
+			self.clear_badges()
+
+			imageLocation = self.programImages[10]
+			image = mpimg.imread(imageLocation)
+			self.f = plt.figimage(image)
+
+			self.lvl3_need_dis_rdy = False
+
+	def level_three_screen(self, gestureNum):
+		if self.lvl3_need_dis:
+			self.f.remove()
+			self.clear_badges()
+
+			imageLocation = self.programImages[10]
+			image = mpimg.imread(imageLocation)
+			self.f = plt.figimage(image)
+
+			self.lvl3_need_dis = False
+
+		# if the previous gesture number is different than this new call, change stuff
+		if self.prevGestNum != gestureNum:
+			imageLocation = self.digitImages[gestureNum]
+			image = mpimg.imread(imageLocation)
+			self.digitPanel.imshow(image)
+
+			self.prevGestNum = gestureNum
 
 	def clear_msg_hand(self):
 		self.handPanel.set_title("")
@@ -303,6 +365,18 @@ class GUI():
 			self.backgroundPanel.text(400, 165, 'You signed all the gestures once!', color='white', fontsize=20)
 			self.backgroundPanel.text(450, 190, 'Unlocked Achievement 1', color='white', fontsize=20)
 
+		elif num == 2:
+			self.backgroundPanel.text(400, 165, 'You memorized all the signs by digit!', color='white', fontsize=20)
+			self.backgroundPanel.text(450, 190, 'Unlocked Achievement 2', color='white', fontsize=20)
+
+		elif num == 3:
+			self.backgroundPanel.text(400, 165, 'You completed all the game levels!', color='white', fontsize=20)
+			self.backgroundPanel.text(450, 190, 'Unlocked Achievement 3', color='white', fontsize=20)
+
+	def lvl3_ready(self):
+		self.backgroundPanel.text(520, 165, 'Get ready...', color='white', fontsize=20)
+		plt.draw()
+
 	def clear_badge_splash(self):
 		self.badgeEarnedPanel.clear()
 		self.badgeEarnedPanel.axis('off')
@@ -313,18 +387,46 @@ class GUI():
 			image = mpimg.imread(imageLocation)
 			self.badgeEarnedPanel.imshow(image)
 
-	def lvl_one_comp(self):
-		if self.onecomp_need_dis:
-			self.clear_hand_tracing()
-			self.f.remove()
-
-			imageLocation = self.programImages[5]
+		elif num == 2:
+			imageLocation=self.badgeImages[1]
 			image = mpimg.imread(imageLocation)
-			self.f = plt.figimage(image)
+			self.badgeEarnedPanel.imshow(image)
 
+		elif num == 3:
+			imageLocation=self.badgeImages[2]
+			image = mpimg.imread(imageLocation)
+			self.badgeEarnedPanel.imshow(image)
 			plt.draw()
 
-			self.onecomp_need_dis = False
+	def lvl_one_comp(self):
+		self.clear_hand_tracing()
+		self.f.remove()
+
+		imageLocation = self.programImages[5]
+		image = mpimg.imread(imageLocation)
+		self.f = plt.figimage(image)
+
+		plt.draw()
+
+	def lvl_two_comp(self):
+		self.clear_hand_tracing()
+		self.f.remove()
+
+		imageLocation = self.programImages[11]
+		image = mpimg.imread(imageLocation)
+		self.f = plt.figimage(image)
+
+		plt.draw()
+
+	def lvl_three_comp(self):
+		self.clear_hand_tracing()
+		self.f.remove()
+
+		imageLocation = self.programImages[12]
+		image = mpimg.imread(imageLocation)
+		self.f = plt.figimage(image)
+
+		plt.draw()
 
 	def clear_gesturePanel(self):
 		self.gesturePanel.clear()
@@ -379,15 +481,20 @@ class GUI():
 			ln = []
 
 	def user_progressBar(self, progress):
-		if progress == 75:
+		if progress >= 75:
 			c = 'k'
 		elif progress < 75:
 			c = 'b'
 		self.lines.append(self.handPanel.plot([progress,75], [165,165], [450,450], \
 			color=c, linewidth=10, solid_capstyle='round', ))
 
-	def timer_progressBar(self):
-		''
+	def timer_progressBar(self, time):
+		if time == 75:
+			c = 'k'
+		elif time < 75:
+			c = 'y'
+		self.lines.append(self.handPanel.plot([time,75], [170,170], [450,450], \
+			color=c, linewidth=10, solid_capstyle='round', ))
 
 	# def gesture_status(self):
 	# 	self.lines.append(self.handPanel.plot([],[150,150],[450,450]))
@@ -424,16 +531,25 @@ class GUI():
 	def write_stats(self):
 		i = 0
 		for record in db.userRecord:
-			# print record
-			# print db.userRecord[record]
+			self.backgroundPanel.text(300, 10+i, record+' '+str(db.userRecord[record]), color='white', fontsize='9')
+			i+= 20	
 
-			self.backgroundPanel.text(300, 40+i, record+' '+str(db.userRecord[record]), color='white')
-			# self.backgroundPanel.text(300, 160+i, db.userRecord[record], color='white')
+	def leaderboard_screen(self):
+		self.f.remove()
 
-			i+= 30
+		imageLocation = self.programImages[3]
+		image = mpimg.imread(imageLocation)
+		self.f = plt.figimage(image)
 
-# self.backgroundPanel.text(400, 165, 'You signed all the gestures once!', color='white', fontsize=20)
-# self.backgroundPanel.text(450, 190, 'Unlocked Achievement 1', color='white', fontsize=20)			
+		self.write_leaderb()
+
+		plt.draw()
+
+	def write_leaderb(self):
+		leaderb = db.get_leaderboard()
+		self.backgroundPanel.text(300, 100, '1: '+leaderb[0]+' '+leaderb[1], color='white', fontsize='60')
+		self.backgroundPanel.text(300, 200, '2: '+leaderb[2]+' '+leaderb[3], color='white', fontsize='60')
+		self.backgroundPanel.text(300, 300, '3: '+leaderb[4]+' '+leaderb[5], color='white', fontsize='60')
 
 # =========================================
 # GAME CLASS ==============================
@@ -461,6 +577,7 @@ class Game():
 		self.PHASE_1 = 1
 		self.PHASE_2 = 2
 		self.PHASE_3 = 3 
+		self.PHASE_OVER = 4
 
 		# Gesture Correct/Incorrect
 		self.CHECK = 0
@@ -476,13 +593,17 @@ class Game():
 		self.gameLvl = None
 		self.levelPhase = self.PHASE_1
 		self.resetStartTime = True
+		self.start_level = True
 		self.startTime = 0
 		self.onTrack = None
+		self.prevGestNum = None
 
-		# self.gestureNum = random.randint(0,9)
-		self.gestureNum = 8#0
-
+		self.gestureNum = 0
+		self.time = self.RESTART
 		self.progress = self.RESTART
+
+		self.roundPoints = 0
+		self.lives = 3
 
 		self.trialTime = 0
 		self.gestureTime = {0:0, 1:0, 2:0, 3:0, 4:0, 5:0, 6:0, 7:0, 8:0, 9:0}
@@ -505,7 +626,7 @@ class Game():
 
 		elif self.gameState == self.MENU:
 
-			thread.start_new_thread(gui.level_one_msg, (0,)) #####
+			thread.start_new_thread(gui.title_msg, (0,)) #####
 
 			gui.draw_hand(frame, '#ffffff')
 			gui.menu_screen(db.latest_level())
@@ -584,7 +705,7 @@ class Game():
 
 				if self.levelPhase == self.PHASE_1:
 
-					thread.start_new_thread(self.msg, (1,))
+					self.msg(1)
 
 					if hands_in_frame == 1:
 						if int(predictedGesture) == self.gestureNum:
@@ -628,7 +749,7 @@ class Game():
 
 				elif self.levelPhase == self.PHASE_2:
 
-					thread.start_new_thread(self.msg, (2,))
+					self.msg(2)
 					
 					if hands_in_frame == 1:
 						if int(predictedGesture) == self.gestureNum:
@@ -653,7 +774,11 @@ class Game():
 									self.gestureNum = self.redoList[0]
 
 								elif len(self.redoList) == 0: # SETUP FOR 3
-									self.gestureNum = random.randint(0, 9)
+									self.prevGestNum = self.gestureNum
+									self.gestureNum = random.randint(0,9)
+									while self.prevGestNum == self.gestureNum:
+										self.gestureNum = random.randint(0,9)
+
 									self.redoList = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 									self.levelPhase = self.PHASE_3
 									print 'ENTER PHASE 3'
@@ -663,7 +788,7 @@ class Game():
 
 				elif self.levelPhase == self.PHASE_3:
 
-					thread.start_new_thread(self.msg, (3,))
+					self.msg(3)
 					
 					if hands_in_frame == 1:
 						if int(predictedGesture) == self.gestureNum:
@@ -702,28 +827,194 @@ class Game():
 					else:
 						self.progress = self.RESTART
 
+
+
 		# ================
 		# LEVEL 2 ========
 		# ================
 
 			elif self.gameLvl == self.LEVEL_2:
-				gui.draw_hand(frame,'b')
-				# gui.level_one_screen()
+
+				if int(predictedGesture) == self.gestureNum:
+					gui.draw_hand(frame,'green')
+				else:
+					gui.draw_hand(frame,'red')
+
+				gui.level_two_screen(self.gestureNum)
+				gui.user_progressBar(self.progress)
+
+				if self.resetStartTime:
+					self.startTime = time.time()
+					self.resetStartTime = False
+
+				if self.levelPhase == self.PHASE_1:
+
+					self.msg(4)
+
+					if hands_in_frame == 1:
+						if int(predictedGesture) == self.gestureNum:
+							self.progress -= 10
+
+							if self.progress <= self.END:
+								thread.start_new_thread(self.correct, ())
+								gui.clear_digitPanel()
+
+								elapsed = time.time() - self.startTime
+
+								db.add_time(self.gestureNum, elapsed)
+								db.add_attempt(self.gestureNum)
+
+								self.progress = self.RESTART
+								self.resetStartTime = True
+
+								if self.gestureNum < 9:
+									self.gestureNum += 1
+
+								elif self.gestureNum == 9:
+
+									db.earn_badge2()
+									thread.start_new_thread(self.badges, (2,))
+
+									self.gestureNum = random.randint(0,(9-1)) #exclude 9 from being generated first DO THIS FOR LVL1
+									self.redoList = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+									self.levelPhase = self.PHASE_2
+									print 'ENTER PHASE 2'
+
+					else:
+						self.progress = self.RESTART
+
+				elif self.levelPhase == self.PHASE_2:
+					
+					self.msg(5)
+
+					if hands_in_frame == 1:
+						if int(predictedGesture) == self.gestureNum:
+							self.progress -= 10
+
+							if self.progress <= self.END:
+								thread.start_new_thread(self.correct, ())
+								gui.clear_digitPanel()
+
+								db.add_attempt(self.gestureNum)
+
+								self.progress = self.RESTART
+
+								self.redoList.remove(self.gestureNum)
+
+								if len(self.redoList) > 0:
+									randomIndex = random.randint(0, len(self.redoList)-1)
+									self.gestureNum = self.redoList[randomIndex]
+ 
+								elif len(self.redoList) == 0:
+									self.param_resets()
+
+									db.completed_lvl2()
+
+									self.fin_lvl2()
+									self.gameState = self.MENU
+									gui.menu_need_dis = True
+									gui.lvl2_need_dis = True
+									print 'MAIN MENU'
 
 		# ================
 		# LEVEL 3 ========
 		# ================
 
 			elif self.gameLvl == self.LEVEL_3:
-				gui.draw_hand(frame,'g')
-				# gui.level_one_screen()
+
+				gui.level_three_screen_ready()
+				self.msg(6)
+
+				if int(predictedGesture) == self.gestureNum:
+					gui.draw_hand(frame,'green')
+				else:
+					gui.draw_hand(frame,'red')
+
+				if self.start_level:
+					self.msg_lvl3()
+					self.gestureNum = random.randint(0,9)
+					self.start_level = False
+
+				gui.level_three_screen(self.gestureNum)
+				gui.user_progressBar(self.progress)
+				gui.timer_progressBar(self.time)
+
+				if self.levelPhase == self.PHASE_1:
+					if self.lives == 0:
+						self.levelPhase = self.PHASE_OVER
+						print 'ENTER PHASE OVER'
+
+					if self.time > self.END:
+						self.time -= 5
+
+						if hands_in_frame == 1:
+							if int(predictedGesture) == self.gestureNum:
+								self.progress -= 10
+
+								if self.progress <= self.END:
+									thread.start_new_thread(self.correct, ())
+									gui.clear_digitPanel()
+
+									db.add_attempt(self.gestureNum)
+
+									self.roundPoints += 1
+
+									self.progress = self.RESTART
+									self.time = self.RESTART
+
+									self.prevGestNum = self.gestureNum
+									self.gestureNum = random.randint(0,9)
+									while self.prevGestNum == self.gestureNum:
+										self.gestureNum = random.randint(0,9)
+
+							else:
+								if self.progress < self.RESTART:
+									self.progress += 3
+						else:
+								if self.progress < self.RESTART:
+									self.progress += 3
+
+					elif self.time <= self.END:
+						thread.start_new_thread(self.wrong, ())
+						gui.clear_digitPanel()
+
+						self.progress = self.RESTART
+						self.time = self.RESTART
+
+						self.lives -= 1
+
+						self.prevGestNum = self.gestureNum
+						self.gestureNum = random.randint(0,9)
+						while self.prevGestNum == self.gestureNum:
+							self.gestureNum = random.randint(0,9)		
+
+				elif self.levelPhase == self.PHASE_OVER:
+					gui.clear_digitPanel()
+					self.param_resets()
+
+					db.add_score(self.roundPoints)
+
+					db.earn_badge3()
+					self.badges(3)
+
+					db.completed_lvl3()
+
+					self.fin_lvl3()
+
+					self.leaderboard()
+
+					self.gameState = self.MENU
+					gui.menu_need_dis = True
+					gui.lvl3_need_dis_rdy = True
+					gui.lvl3_need_dis = True
+					print 'MAIN MENU'
+					
 
 		elif self.gameState == self.EXIT:
 			self.exit_game()
 
 		elif self.gameState == self.STATS:
-
-			gui.draw_hand(frame, '#ffffff')
+			gui.draw_hand(frame, '#ffffff') # should incorporate use of going back to the menu!
 			self.stats_view()
 
 	def correct(self):
@@ -731,13 +1022,41 @@ class Game():
 		time.sleep(2)
 		gui.clear_statusPanel()
 
+	def wrong(self):
+		gui.update_statusPanel(self.WRONG)
+		time.sleep(2)
+		gui.clear_statusPanel()
+
 	def msg(self, phase):
-		gui.level_one_msg(phase)
+		gui.title_msg(phase)
+
+	def leaderboard(self):
+		gui.leaderboard_screen()
+		time.sleep(5)
+		gui.clear_msg_bg()
+
+	def msg_lvl3(self):
+		gui.lvl3_ready()
+		time.sleep(4)
+		gui.clear_msg_bg()
 
 	def fin_lvl1(self):
 		gui.clear_statusPanel()
 		gui.clear_msg_hand()
 		gui.lvl_one_comp()
+		time.sleep(2)
+
+	def fin_lvl2(self):
+		gui.clear_statusPanel()
+		gui.clear_msg_hand()
+		gui.lvl_two_comp()
+		time.sleep(2)
+
+	def fin_lvl3(self):
+		gui.clear_statusPanel()
+		# gui.clear_digitPanel()
+		gui.clear_msg_hand()
+		gui.lvl_three_comp()
 		time.sleep(2)
 
 	def exit_game(self):
@@ -755,6 +1074,7 @@ class Game():
 		self.gestureNum = 0
 		self.levelPhase = self.PHASE_1
 		self.trialTime = 0
+		self.resetStartTime = True
 
 	def badges(self, num):
 		gui.text_msg(num)
@@ -831,6 +1151,7 @@ def main():
 	##############
 
 	db.display_profile()
+	db.get_leaderboard()
 
 	##############
 
@@ -858,8 +1179,8 @@ def main():
 # =========================================
 
 def get_username():
-	userName = raw_input('Enter Name: ')
-	# userName = 'LILY'
+	# userName = raw_input('Enter Name: ')
+	userName = 'LILY'
 	userNameLower = userName.lower()
 	return userNameLower
 

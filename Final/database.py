@@ -42,6 +42,7 @@ class Database():
 			'digit8time' : 100, 
 			'digit9time' : 100, 
 			'besttime' : 100,
+ 			'bestscore' : 0,
 			'complvl1' : False,
 			'complvl2' : False,
 			'complvl3' : False,
@@ -85,6 +86,15 @@ class Database():
 
 		self.save_database()
 
+	def add_score(self, roundPoints):
+		if roundPoints > self.userRecord['bestscore']:
+			self.userRecord['bestscore'] = roundPoints
+			# print 'New personal high score'
+		# else:
+			# print 'Round score lower than current high score'
+
+		self.save_database()
+
 	def completed_lvl1(self):
 		print 'Completed Stage 1'
 		self.userRecord['complvl1'] = True
@@ -118,17 +128,17 @@ class Database():
 		self.save_database()
 
 	def earn_badge2(self):
-		print 'Achievement:'
+		print 'Achievement: Memorized gestures!'
 		self.userRecord['badge2'] = True
 		self.save_database()
 
 	def earn_badge3(self):
-		print 'Achievement:'
+		print 'Achievement: Finished all the levels!'
 		self.userRecord['badge3'] = True
 		self.save_database()
 
 	def earn_badge4(self):
-		print 'Achievement:'
+		print 'Achievement: High score over 10!'
 		self.userRecord['badge4'] = True
 		self.save_database()
 
@@ -147,22 +157,36 @@ class Database():
 	def save_database(self):
 		pickle.dump(self.database, open('userData/database.p','wb'))
 
-	# def get_leaderboard(self): #leaderboard appended in order
-		# leaderboard = []
+	def get_leaderboard(self):
+		leaderboard = []
+		highest = -1
+		highestUser = None
+		nhighest = -1
+		nhighestUser = None
+		nnhighest = -1
+		nnhighestUser = None
 
-		# iterate through dictionary, grab usernames and their 'besttime'
-		# append these to TWO LISTS, one for names one for their time MAKE SURE INDICES MATCH
-		# find max of score list, set to highest
-		# get index of that, retrieve username
-		# delete both of these from each list
-		# finx max of new list without the TOP highest...do again until get TOP THREE
+		for user in self.database:
+			if self.database[user]['bestscore'] > highest:
+				highest = self.database[user]['bestscore']
+				highestUser = user
+			else:
+				if self.database[user]['bestscore'] > nhighest:
+					nhighest = self.database[user]['bestscore']
+					nhighestUser = user
+				else:
+					if self.database[user]['bestscore'] > nnhighest:
+						nnhighest = self.database[user]['bestscore']
+						nnhighestUser = user
 
-		# problem with this is that what if one person has multiple GREAT RUNS that beat everyone else
-		# it's as if the user can only have one best score...how do you keep track of all the top scores.
-		# ADD THEM AS THEY COME IN...KEEP TRACK OF ALL THE BEST SCORES TOTAL EVER?
-		# PUT THAT INTO A DB? JUST FOR SCORES?
+		leaderboard.append(highestUser)
+		leaderboard.append(str(highest))
+		leaderboard.append(nhighestUser)
+		leaderboard.append(str(nhighest))
+		leaderboard.append(nnhighestUser)
+		leaderboard.append(str(nnhighest))
 
-		# return leaderboard
+		return leaderboard
 
 	def display_profile(self):
 		pp = pprint.PrettyPrinter(indent=4)
