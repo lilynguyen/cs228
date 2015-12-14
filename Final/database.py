@@ -1,4 +1,5 @@
 import pickle
+import pprint
 
 # =========================================
 # DATABASE ================================
@@ -43,7 +44,11 @@ class Database():
 			'besttime' : 100,
 			'complvl1' : False,
 			'complvl2' : False,
-			'complvl3' : False
+			'complvl3' : False,
+			'badge1' : False,
+			'badge2' : False,
+			'badge3' : False,
+			'badge4' : False
 		}
 
 	def add_login(self):
@@ -95,6 +100,50 @@ class Database():
 		self.userRecord['complvl3'] = True
 		self.save_database()
 
+	def latest_level(self):
+		if self.userRecord['complvl1'] == False:
+			return 1
+		elif self.userRecord['complvl1'] == True:
+			if self.userRecord['complvl2'] == False:
+				return 2
+			elif self.userRecord['complvl2'] == True:
+				if self.userRecord['complvl3'] == False:
+					return 3
+				elif self.userRecord['complvl3'] == True:
+					return 4
+
+	def earn_badge1(self):
+		print 'Achievement: Signed all gestures!'
+		self.userRecord['badge1'] = True
+		self.save_database()
+
+	def earn_badge2(self):
+		print 'Achievement:'
+		self.userRecord['badge2'] = True
+		self.save_database()
+
+	def earn_badge3(self):
+		print 'Achievement:'
+		self.userRecord['badge3'] = True
+		self.save_database()
+
+	def earn_badge4(self):
+		print 'Achievement:'
+		self.userRecord['badge4'] = True
+		self.save_database()
+
+	def get_badge1(self):
+		return self.userRecord['badge1']
+
+	def get_badge2(self):
+		return self.userRecord['badge2']
+
+	def get_badge3(self):
+		return self.userRecord['badge3']
+
+	def get_badge4(self):
+		return self.userRecord['badge4']
+
 	def save_database(self):
 		pickle.dump(self.database, open('userData/database.p','wb'))
 
@@ -114,3 +163,7 @@ class Database():
 		# PUT THAT INTO A DB? JUST FOR SCORES?
 
 		# return leaderboard
+
+	def display_profile(self):
+		pp = pprint.PrettyPrinter(indent=4)
+		pp.pprint(self.userRecord)
