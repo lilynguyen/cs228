@@ -1199,8 +1199,8 @@ def main():
 # =========================================
 
 def get_username():
-	# userName = raw_input('Enter Name: ')
-	userName = 'LILY'
+	userName = raw_input('Enter Name: ')
+	# userName = 'LILY'
 	userNameLower = userName.lower()
 	return userNameLower
 
